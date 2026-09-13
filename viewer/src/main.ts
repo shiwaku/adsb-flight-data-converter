@@ -1,8 +1,15 @@
 // maplibre-gl v6 は default export を持たない。名前付きで取る。
 import {
   AttributionControl, Map as MapLibreMap, MapMouseEvent,
-  NavigationControl, Popup, addProtocol,
+  NavigationControl, Popup, addProtocol, setWorkerUrl,
 } from 'maplibre-gl'
+// maplibre 6 はワーカーの場所を実行時に import.meta.url から決める（同じ階層に
+// maplibre-gl-worker.mjs がある前提）。その前提が外れるとワーカーが404になり、
+// タイルが1枚も復号されない。症状は「地図が真っ黒なまま load イベントが飛ばず、
+// パネルもレイヤーも出ない」。スタイルが背景色1枚でも同じで、しかも
+// error イベントすら飛ばないので気づきにくい。
+// ?worker&url で Vite にワーカーを別チャンクとして吐かせ、そのURLを渡して回避する。
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Protocol } from 'pmtiles'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -14,8 +21,27 @@ import { buildPanel } from './ui'
 import { ATTRIBUTION, INITIAL_VIEW, TRAIL_OPTIONS } from './config'
 import './style.css'
 
+setWorkerUrl(workerUrl)
+
 const protocol = new Protocol()
 addProtocol('pmtiles', protocol.tile)
+
+/**
+ * deck.gl（@deck.gl/mapbox）との互換のため map.transform を生やす。
+ *
+ * deck.gl の getViewport は `map.transform.height` を読む。maplibre 6 で
+ * transform が `map._camera.transform` へ移ったため、そのままでは
+ * 「Cannot read properties of undefined (reading 'height')」で落ちる。
+ * deck.gl が触るのは読み取りだけなので、別名を用意すれば足りる。
+ */
+function exposeTransform(m: MapLibreMap): void {
+  const anyMap = m as unknown as { transform?: unknown; _camera?: { transform?: unknown } }
+  if (anyMap.transform || !anyMap._camera?.transform) return
+  Object.defineProperty(m, 'transform', {
+    get: () => (m as unknown as { _camera: { transform: unknown } })._camera.transform,
+    configurable: true,
+  })
+}
 
 // 発光が主役の可視化なので、テーマは既定でダークにする。
 // 淡色地図では白い芯が背景に溶けて光って見えない。
@@ -46,6 +72,7 @@ if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__map = 
 
 map.addControl(new AttributionControl({ compact: true, customAttribution: ATTRIBUTION }))
 map.addControl(new NavigationControl({ visualizePitch: true }), 'top-right')
+exposeTransform(map)
 
 const state = {
   cursor: 0,

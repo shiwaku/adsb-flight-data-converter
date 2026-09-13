@@ -7,10 +7,30 @@
 Phase 0〜7 が一通り通った。対象期間は1週間（2026-03-31〜04-06 UTC）。
 このあと1か月（〜04-29）へ延ばす。
 
-**viewer の描画は未確認。** ブラウザ自動化のタブが `document.hidden` 扱いで
-requestAnimationFrame が回らず（1.5秒で0フレーム）、MapLibre も deck.gl も
-初期描画に到達しなかったため。背景色だけの最小スタイルでも同じだったので
-コード側の問題ではないが、実際の見た目は誰も見ていない状態。
+### viewer が真っ黒になる問題（原因判明・修正済み）
+
+**maplibre 6 はワーカーの場所を実行時に `import.meta.url` から決める。**
+その前提が外れるとワーカーが404になり、タイルが1枚も復号されない。
+症状は「地図が真っ黒なまま `load` イベントが飛ばず、パネルもレイヤーも出ない」。
+
+厄介なのは、**`error` イベントすら飛ばない**こと。スタイルが背景色1枚だけでも
+同じ症状になるので、スタイルやタイルを疑っても何も出てこない。
+
+```ts
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
+setWorkerUrl(workerUrl)
+```
+
+修正後、`isStyleLoaded() === true`、ソース4つ（`v`/`mesh`/`tracks`/`points`）が登録され、
+パネルも構築されることを確認した。参考実装 jma-earthquake-data-converter の
+`map/createMap.ts` に同じ罠と対処が記録されている。
+
+あわせて deck.gl 用に `map.transform` を生やしてある。maplibre 6 で transform が
+`map._camera.transform` へ移り、deck.gl が `transform.height` を読めずに落ちるため。
+
+**タイルの読み込みと実際の描画はまだ未確認。** ブラウザ自動化のタブが
+`document.hidden` 扱いで requestAnimationFrame が回らず（1.5秒で0フレーム）、
+タイル取得まで到達できないため。ソースの構成が正しいことまでは確認済み。
 
 ```
 cd viewer && npm install && npm run dev   # http://localhost:5173/
