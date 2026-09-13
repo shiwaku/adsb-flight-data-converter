@@ -56,6 +56,10 @@ const map = new MapLibreMap({
   pitch: INITIAL_VIEW.pitch,
   bearing: INITIAL_VIEW.bearing,
   maxPitch: 85,
+  // URL のハッシュに視点（#zoom/lat/lng/bearing/pitch）を載せる。
+  // 見つけた景色をそのまま共有でき、リロードしても位置が戻らない。
+  // ハッシュが付いていればそちらが INITIAL_VIEW より優先される。
+  hash: true,
   attributionControl: false,
 })
 // MapLibre はタイルやスタイルの失敗を例外にせず error イベントで流す。
