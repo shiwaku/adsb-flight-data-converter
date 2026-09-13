@@ -6,19 +6,30 @@
  */
 export const TILE_BASE = (import.meta.env.VITE_TILE_BASE || '/tiles').replace(/\/+$/, '')
 
+/**
+ * source-layer 名は tippecanoe が入力ファイル名から付ける。
+ * `points.geojsonl` を食わせると `pointsgeojsonl`（ドットが抜ける）になる。
+ *
+ * ここがずれるとタイルは200で届くのに1地物も描かれない。
+ * MapLibre は存在しない source-layer を黙って無視するのでエラーも出ない。
+ * 実際の名前は次で確認できる:
+ *   python -c "import sqlite3,json;print(json.loads(dict(sqlite3.connect('work/tiles/points.mbtiles').execute('SELECT name,value FROM metadata')) ['json'])['vector_layers'])"
+ */
+const LAYER_SUFFIX = 'geojsonl'
+
 /** 観測点。3次元表示の主役。MLT で配る。 */
 export const POINTS_MLT = `${TILE_BASE}/points-mlt/{z}/{x}/{y}.mlt`
-export const POINTS_SOURCE_LAYER = 'points'
+export const POINTS_SOURCE_LAYER = `points${LAYER_SUFFIX}`
 export const POINTS_MINZOOM = 5
 export const POINTS_MAXZOOM = 10
 
 /** フライト軌跡。俯瞰用の2次元。 */
 export const TRACKS_PMTILES = `${TILE_BASE}/tracks.pmtiles`
-export const TRACKS_SOURCE_LAYER = 'tracks'
+export const TRACKS_SOURCE_LAYER = `tracks${LAYER_SUFFIX}`
 
 /** メッシュ密度。低ズームの全国俯瞰はこれが担う。 */
 export const MESH_PMTILES = `${TILE_BASE}/mesh.pmtiles`
-export const MESH_SOURCE_LAYER = 'mesh'
+export const MESH_SOURCE_LAYER = `mesh${LAYER_SUFFIX}`
 
 export const ATTRIBUTION =
   'Contains information from <a href="https://www.adsb.lol/" target="_blank" rel="noopener">ADSB.lol</a>, ' +

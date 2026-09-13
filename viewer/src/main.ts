@@ -16,7 +16,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { getBasemapStyle } from './basemap'
 import { initialTheme, applyThemeAttr } from './theme'
 import { createGlow3d } from './glow3d'
-import { addLayers, setVisible } from './layers2d'
+import { addLayers, setVisible, verifySourceLayers } from './layers2d'
 import { buildPanel } from './ui'
 import { ATTRIBUTION, INITIAL_VIEW, TRAIL_OPTIONS } from './config'
 import './style.css'
@@ -112,6 +112,10 @@ map.on('load', () => {
     },
     state,
   })
+
+  // タイルが読めた時点で source-layer 名を突き合わせる。ずれていれば
+  // 「タイルは届くのに何も出ない」状態なので、黙らせずコンソールへ出す。
+  map.once('idle', () => verifySourceLayers(map))
 
   glow.onRangeChange((min, max, count) => {
     const first = state.min === 0

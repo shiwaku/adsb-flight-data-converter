@@ -28,9 +28,32 @@ setWorkerUrl(workerUrl)
 あわせて deck.gl 用に `map.transform` を生やしてある。maplibre 6 で transform が
 `map._camera.transform` へ移り、deck.gl が `transform.height` を読めずに落ちるため。
 
-**タイルの読み込みと実際の描画はまだ未確認。** ブラウザ自動化のタブが
-`document.hidden` 扱いで requestAnimationFrame が回らず（1.5秒で0フレーム）、
-タイル取得まで到達できないため。ソースの構成が正しいことまでは確認済み。
+### source-layer 名が合わずに何も描画されない問題（原因判明・対処済み）
+
+タイルは200で届くのに1地物も描かれない、という状態になった。
+
+原因は **tippecanoe が付ける source-layer 名**。`-L` を指定しないと入力ファイル名から
+名前を作り、しかもドットを落とす。`points.geojsonl` → **`pointsgeojsonl`**。
+viewer 側は `points` を指していたので一致しない。
+
+**MapLibre は存在しない source-layer を黙って無視する。** エラーもコンソール出力も
+一切なく、ただ何も出ない。これが原因究明を難しくする。
+
+対処は3つ入れた。
+
+1. `build_tiles.sh` が `-L"$LAYER:$SRC"` で名前を固定する
+2. 生成直後に mbtiles のメタデータを読んで、意図した名前か検証する（違えば異常終了）
+3. viewer 側も `verifySourceLayers()` で突き合わせ、ずれていればコンソールに出す
+
+既存のタイルは旧名のままなので、`viewer/src/config.ts` の `LAYER_SUFFIX` を
+`'geojsonl'` にして合わせてある。**次にタイルを作り直したら `LAYER_SUFFIX` は
+空文字にすること**（1か月へ延長する際の再生成で切り替わる）。
+
+### まだ確認できていないこと
+
+実際の描画。ブラウザ自動化のタブが `document.hidden` 扱いで
+requestAnimationFrame が回らず（1.5秒で0フレーム）、タイル取得まで到達できない。
+ソースの構成が正しいことと、スタイル・パネルが構築されることまでは確認済み。
 
 ```
 cd viewer && npm install && npm run dev   # http://localhost:5173/

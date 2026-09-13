@@ -107,3 +107,35 @@ export function setVisible(map: MapLibreMap, id: string, visible: boolean): void
     map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none')
   }
 }
+
+/**
+ * 指定した source-layer がタイルに実在するか確かめる。
+ *
+ * MapLibre は存在しない source-layer を**黙って無視する**。タイルは200で届き、
+ * コンソールにも何も出ず、ただ1地物も描かれない。原因に辿り着くのが非常に難しい。
+ * 実際に踏んだ（tippecanoe が `points.geojsonl` から `pointsgeojsonl` という
+ * 名前を作るのに、viewer は `points` を指していた）。
+ *
+ * PMTiles のソースは読み込み後に vectorLayerIds を持つので突き合わせられる。
+ * MLT は TileJSON を自前で組み立てており実タイルの中身を知らないため、
+ * ここでは確認できない。タイル生成側（build_tiles.sh）が -L で名前を固定し、
+ * 生成直後に検証している。
+ */
+export function verifySourceLayers(map: MapLibreMap): void {
+  const expect: Array<[string, string]> = [
+    ['mesh', MESH_SOURCE_LAYER],
+    ['tracks', TRACKS_SOURCE_LAYER],
+  ]
+  for (const [sourceId, wanted] of expect) {
+    const source = map.getSource(sourceId) as { vectorLayerIds?: string[] } | undefined
+    const ids = source?.vectorLayerIds
+    if (!ids || ids.length === 0) continue
+    if (!ids.includes(wanted)) {
+      console.error(
+        `[adsb] source "${sourceId}" に source-layer "${wanted}" が無い。` +
+        `タイルが持っているのは ${JSON.stringify(ids)}。このままでは何も描画されない。` +
+        ' viewer/src/config.ts の *_SOURCE_LAYER を合わせること。',
+      )
+    }
+  }
+}

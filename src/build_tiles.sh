@@ -52,13 +52,12 @@ THREADS=${MLT_THREADS:-8}
 
 mkdir -p "$OUT"
 
-# tippecanoe は入力のファイル名を source-layer 名にする（2.x の -l は GLOBAL
-# フラグなので使わない）。viewer 側の source-layer をレイヤ名に合わせるため、
-# レイヤ名どおりの名前で入力を指し直す。
-NAMED="$OUT/$LAYER.geojsonl"
-if [ "$(realpath "$SRC")" != "$(realpath "$NAMED" 2>/dev/null || echo '')" ]; then
-  ln -sf "$(realpath "$SRC")" "$NAMED" 2>/dev/null || cp "$SRC" "$NAMED"
-fi
+# source-layer 名は -L で明示する。
+#
+# 指定しないと tippecanoe は入力ファイル名から名前を作る。しかもドットを落とすので
+# `points.geojsonl` は `pointsgeojsonl` になる。viewer 側が `points` を指していると
+# **タイルは200で届くのに1地物も描かれない**。MapLibre は存在しない source-layer を
+# 黙って無視するため、エラーもコンソールも何も出ず原因が分からない。実際に踏んだ。
 
 # export_geojsonseq.py が残した一覧を読んで、実数属性の型を固定する。
 # tippecanoe が整数値を INT で格納してしまうのを抑えるため。
