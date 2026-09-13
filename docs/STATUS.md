@@ -213,8 +213,16 @@ MVT と MLT の枚数は3レイヤとも一致、エンコーダの例外は0件
 
 ## 次にやること
 
-1. **viewer の描画を実際に見る。** 発光の強さ、残光の長さ、
-   高度の誇張率（`viewer/src/altitude.ts` の `ALT_EXAGGERATION`、現在3倍）を詰める
-2. 対象期間を1か月（2026-03-31〜04-29 UTC）へ延ばす。
-   `fetch_range.py` は取得済みの日を飛ばすので、続きから流せる
-3. タイルの配信先を決める（現在は開発サーバが work/tiles を直に配る）
+残タスクは issue に起票してある。
+
+| # | 内容 |
+|---|---|
+| [#1](https://github.com/shiwaku/adsb-flight-data-converter/issues/1) | viewer の描画を確認し、発光・高度の誇張率・残光を調整する |
+| [#2](https://github.com/shiwaku/adsb-flight-data-converter/issues/2) | 対象期間を1か月（2026-03-31〜04-29 UTC）へ延長する |
+| [#3](https://github.com/shiwaku/adsb-flight-data-converter/issues/3) | タイル再生成後に viewer の `LAYER_SUFFIX` を空文字へ戻す |
+| [#4](https://github.com/shiwaku/adsb-flight-data-converter/issues/4) | タイルの配信先を決める |
+| [#5](https://github.com/shiwaku/adsb-flight-data-converter/issues/5) | 参考画像（東京 R=80km の観測点密度図）を再現する |
+| [#6](https://github.com/shiwaku/adsb-flight-data-converter/issues/6) | デモサイトを公開する |
+
+着手順は #1 → #2（#3 を同時に）→ #5 → #4 → #6。
+#1 は他に依存しないので最初に片づく。
