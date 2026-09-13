@@ -41,7 +41,7 @@ ADSB.lol の履歴データ（globe_history）を、GIS で扱える形式へ変
 | 4 | GeoParquet | 完了 |
 | 5 | PMTiles | 完了 |
 | 6 | MLT | 完了 |
-| 7 | viewer（MapLibre + deck.gl で3次元表示） | 実装済・確認中 |
+| 7 | viewer（MapLibre + deck.gl で3次元表示） | 実装済（描画は未確認） |
 
 ## Phase 1 観測点の抽出
 

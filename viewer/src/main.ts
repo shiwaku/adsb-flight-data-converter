@@ -32,6 +32,18 @@ const map = new MapLibreMap({
   maxPitch: 85,
   attributionControl: false,
 })
+// MapLibre はタイルやスタイルの失敗を例外にせず error イベントで流す。
+// 拾っておかないと「真っ黒な地図」だけが残って原因が分からない。
+map.on('error', (e) => {
+  console.error('[adsb] map error:', e.error?.message ?? e)
+})
+window.addEventListener('error', (e) => console.error('[adsb] uncaught:', e.error ?? e.message))
+window.addEventListener('unhandledrejection', (e) => console.error('[adsb] rejected:', e.reason))
+
+// 開発時だけ地図をコンソールから触れるようにしておく。
+// タイルが出ないときに map.getStyle() や querySourceFeatures を叩いて切り分ける。
+if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__map = map
+
 map.addControl(new AttributionControl({ compact: true, customAttribution: ATTRIBUTION }))
 map.addControl(new NavigationControl({ visualizePitch: true }), 'top-right')
 
@@ -51,6 +63,7 @@ const state = {
 }
 
 map.on('load', () => {
+  try {
   addLayers(map)
   setVisible(map, 'mesh-fill', state.showMesh)
   setVisible(map, 'tracks-line', state.showTracks2d)
@@ -127,4 +140,8 @@ map.on('load', () => {
     showTracks: state.showTracks,
     brightness: state.brightness,
   })
+  } catch (err) {
+    console.error('[adsb] レイヤの組み立てに失敗:', err)
+    throw err
+  }
 })
