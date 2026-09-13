@@ -1,0 +1,14 @@
+[project]
+name = "adsb-flight-data-converter"
+version = "0.1.0"
+description = "ADSB.lol の履歴データ（globe_history）を GIS データへ変換する"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.32",
+    "orjson>=3.10",
+    "pyarrow>=18.0",
+    "duckdb>=1.5.5",
+]
+
+[tool.uv]
+package = false
