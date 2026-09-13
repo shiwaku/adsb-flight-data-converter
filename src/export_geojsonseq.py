@@ -35,9 +35,31 @@ import sys
 
 import duckdb
 
-# 観測点。3次元の点群の材料になるので高度が主役。
+# 観測点。3次元表示の主役。点群と軌跡の両方をこの1レイヤで賄う。
+#
+# track_id を持たせているのがミソ。deck.gl 側で track_id ごとにまとめれば、
+# 同じタイルから ScatterplotLayer（点群）と PathLayer（3次元の軌跡）の
+# 両方が描ける。軌跡を別レイヤのラインとしてタイル化すると、tippecanoe の
+# クリップと簡素化で頂点数が変わり、頂点ごとの高度と対応が取れなくなる。
+#
+# track_id の作り方は build_tracks.py と揃える。5分超の飛びで区間を割る。
 POINTS = """
+WITH gapped AS (
+    SELECT *,
+           CAST(to_timestamp(ts) AT TIME ZONE 'UTC' AS DATE) AS day,
+           ts - lag(ts) OVER (PARTITION BY icao, CAST(to_timestamp(ts) AT TIME ZONE 'UTC' AS DATE), leg
+                              ORDER BY ts) AS gap
+    FROM read_parquet($src)
+),
+segmented AS (
+    SELECT *,
+           sum(CASE WHEN gap IS NULL OR gap > 300 THEN 1 ELSE 0 END) OVER (
+               PARTITION BY icao, day, leg ORDER BY ts
+               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS seg
+    FROM gapped
+)
 SELECT
+    icao || '-' || strftime(day, '%Y%m%d') || '-' || leg || '-' || seg AS track_id,
     icao,
     flight,
     t AS actype,
@@ -45,9 +67,11 @@ SELECT
     CAST(coalesce(alt_baro, 0) AS DOUBLE) AS alt,
     CAST(gs AS DOUBLE) AS gs,
     on_ground,
+    -- PathLayer で点を並べ直すための順序。タイル内で点の順番は保証されない。
+    CAST(ts AS DOUBLE) AS ts,
     strftime(to_timestamp(ts) AT TIME ZONE 'UTC', '%Y-%m-%d %H:%M:%S') AS dt,
     ST_Point(lon, lat) AS geom
-FROM read_parquet($src)
+FROM segmented
 {where}
 """
 

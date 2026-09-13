@@ -4,3 +4,7 @@ __pycache__/
 .venv/
 node_modules/
 dist/
+
+# viewer
+viewer/node_modules/
+viewer/dist/

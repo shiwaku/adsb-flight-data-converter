@@ -34,6 +34,7 @@
 #
 # 環境変数で調整する:
 #   MINZOOM / MAXZOOM      ズーム範囲（既定 0〜10）
+#   TIPPECANOE_THIN        間引き方針（既定 "-r1 -pf -pk" ＝間引かない）
 #   TIPPECANOE_EXTRA       tippecanoe への追加フラグ
 #   MLT_ENCODE_JAR         encode.jar の位置
 #   MLT_THREADS            encode.jar の並列数（既定 8）
@@ -75,14 +76,21 @@ if [ -f "$SRC.floats" ]; then
   echo "実数として固定する属性:${TYPES//-T /}"
 fi
 
-# 間引かない。観測点は密度そのものが情報で、軌跡は経路そのものが情報。
+# 既定は間引かない。メッシュも軌跡も、密度や経路そのものが情報だから。
 #   -r1  低ズームでの間引き率を1（＝間引かない）。既定2.5だと薄くなる
 #   -pf  1タイルあたりの地物数上限を外す
 #   -pk  1タイルあたりのサイズ上限（500KB）を外す
+#
+# ただし観測点だけは例外。1,966万点を全ズームに置くとタイルが数GB規模になり、
+# 低ズームでは1枚に全点が入ってブラウザ側が持たない。観測点は TIPPECANOE_THIN に
+# --drop-densest-as-needed を渡して上書きする。全国の俯瞰はメッシュ層が担うので、
+# 低ズームで点が間引かれても見せたい情報は失われない。
+THIN=${TIPPECANOE_THIN:--r1 -pf -pk}
+
 echo "=== 1. GeoJSONSeq → MBTiles ==="
 # shellcheck disable=SC2086
-tippecanoe -Z"$MINZOOM" -z"$MAXZOOM" -r1 -pf -pk --force \
-  $TYPES $TIPPECANOE_EXTRA -o "$OUT/$LAYER.mbtiles" "$NAMED" 2>&1 | tail -2
+tippecanoe -Z"$MINZOOM" -z"$MAXZOOM" --force \
+  $THIN $TYPES $TIPPECANOE_EXTRA -o "$OUT/$LAYER.mbtiles" "$NAMED" 2>&1 | tail -2
 
 echo "=== 2. MBTiles → PMTiles ==="
 rm -f "$OUT/$LAYER.pmtiles"

@@ -1,0 +1,4 @@
+# シェルスクリプトは必ず LF。CRLF だと WSL の bash が
+#   set: -\r: invalid option
+# で落ちる。Windows 側のエディタが書き戻しても LF を保つ。
+*.sh text eol=lf
