@@ -53,6 +53,7 @@ export const TRAIL_OPTIONS = [
   { label: '5分', seconds: 300 },
   { label: '15分', seconds: 900 },
   { label: '30分', seconds: 1800 },
+  { label: '1時間', seconds: 3600 },
   { label: '2時間', seconds: 7200 },
 ]
 

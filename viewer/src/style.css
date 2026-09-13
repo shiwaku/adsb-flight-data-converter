@@ -1,8 +1,14 @@
 :root {
+  /* これが無いと Chrome は select / option / range / スクロールバーを
+     ライトモードで描く。option は白背景のまま color だけ明色が効くので、
+     ドロップダウンを開くと**白背景に白文字**になって中身が読めない。 */
+  color-scheme: dark;
+
   --bg: #07080d;
   --panel: rgba(12, 14, 22, 0.86);
   --fg: #e8eaf2;
-  --dim: #9aa0b4;
+  /* 補助テキスト。#9aa0b4 では 10px の凡例が読みにくかったので持ち上げた。 */
+  --dim: #b6bccd;
   --line: rgba(255, 255, 255, 0.12);
   --accent: #ffc247;
 }
@@ -20,6 +26,9 @@ html, body {
 #map { position: absolute; inset: 0; }
 
 #panel {
+  /* 色は body から継承されるが、明示しておく。地図側のスタイルや
+     ブラウザ既定が割り込んだときに文字が消えるのを防ぐ。 */
+  color: var(--fg);
   position: absolute;
   top: 12px;
   left: 12px;
@@ -59,6 +68,8 @@ html, body {
   background: rgba(255, 255, 255, 0.06); color: var(--fg);
   border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px;
 }
+/* 展開したときの項目。color-scheme だけに任せず明示する。 */
+.field select option { background: #171a24; color: var(--fg); }
 .field input[type="range"] { accent-color: var(--accent); }
 
 .layers { margin: 12px 0 10px; padding-top: 10px; border-top: 1px solid var(--line); }
